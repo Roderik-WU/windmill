@@ -25,6 +25,7 @@ export async function saveGcpTriggerFromCfg(
 			delivery_type: cfg.delivery_type,
 			delivery_config: cfg.delivery_config,
 			base_endpoint: cfg.base_endpoint,
+			delivery_method: cfg.delivery_method,
 			topic_id: cfg.topic_id,
 			path: cfg.path,
 			script_path: cfg.script_path,

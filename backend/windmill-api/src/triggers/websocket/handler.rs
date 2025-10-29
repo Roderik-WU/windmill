@@ -102,6 +102,7 @@ impl TriggerCrud for WebsocketTrigger {
                 script_path,
                 is_flow,
                 enabled,
+                delivery_method,
                 filters,
                 initial_messages,
                 url_runnable_args,
@@ -114,7 +115,7 @@ impl TriggerCrud for WebsocketTrigger {
                 error_handler_args,
                 retry
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now(), $14, $15, $16
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now(), $15, $16, $17
             )
             "#,
             w_id,
@@ -123,6 +124,7 @@ impl TriggerCrud for WebsocketTrigger {
             trigger.base.script_path,
             trigger.base.is_flow,
             trigger.base.enabled.unwrap_or(true),
+            trigger.base.delivery_method as _,
             &filters as _,
             &initial_messages as _,
             trigger
@@ -175,26 +177,28 @@ impl TriggerCrud for WebsocketTrigger {
             script_path = $2,
             path = $3,
             is_flow = $4,
-            filters = $5,
-            initial_messages = $6,
-            url_runnable_args = $7,
-            edited_by = $8,
-            email = $9,
-            can_return_message = $10,
-            can_return_error_result = $11,
+            delivery_method = $5,
+            filters = $6,
+            initial_messages = $7,
+            url_runnable_args = $8,
+            edited_by = $9,
+            email = $10,
+            can_return_message = $11,
+            can_return_error_result = $12,
             edited_at = now(),
             server_id = NULL,
             error = NULL,
-            error_handler_path = $14,
-            error_handler_args = $15,
-            retry = $16
+            error_handler_path = $13,
+            error_handler_args = $14,
+            retry = $15
         WHERE
-            workspace_id = $12 AND path = $13
+            workspace_id = $16 AND path = $17
     ",
             trigger.config.url,
             trigger.base.script_path,
             trigger.base.path,
             trigger.base.is_flow,
+            trigger.base.delivery_method as _,
             filters.as_slice() as &[SqlxJson<Box<RawValue>>],
             initial_messages.as_slice() as &[SqlxJson<Box<RawValue>>],
             trigger
@@ -206,11 +210,11 @@ impl TriggerCrud for WebsocketTrigger {
             &authed.email,
             trigger.config.can_return_message,
             trigger.config.can_return_error_result,
-            w_id,
-            path,
             trigger.error_handling.error_handler_path,
             trigger.error_handling.error_handler_args as _,
-            trigger.error_handling.retry as _
+            trigger.error_handling.retry as _,
+            w_id,
+            path
         )
         .execute(&mut *tx)
         .await?;

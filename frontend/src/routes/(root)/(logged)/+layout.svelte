@@ -15,6 +15,7 @@
 	import WorkspaceMenu from '$lib/components/sidebar/WorkspaceMenu.svelte'
 	import SidebarContent from '$lib/components/sidebar/SidebarContent.svelte'
 	import CriticalAlertModal from '$lib/components/sidebar/CriticalAlertModal.svelte'
+	import MailboxModal from '$lib/components/mailbox/MailboxModal.svelte'
 	import {
 		enterpriseLicense,
 		isPremiumStore,
@@ -42,7 +43,7 @@
 	import { SUPERADMIN_SETTINGS_HASH, USER_SETTINGS_HASH } from '$lib/components/sidebar/settings'
 	import { isCloudHosted } from '$lib/cloud'
 	import { syncTutorialsTodos } from '$lib/tutorialUtils'
-	import { ArrowLeft, Search, WandSparkles } from 'lucide-svelte'
+	import { ArrowLeft, Mailbox, Search, WandSparkles } from 'lucide-svelte'
 	import { getUserExt } from '$lib/user'
 	import { twMerge } from 'tailwind-merge'
 	import OperatorMenu from '$lib/components/sidebar/OperatorMenu.svelte'
@@ -61,6 +62,7 @@
 	OpenAPI.WITH_CREDENTIALS = true
 	let menuOpen = $state(false)
 	let globalSearchModal: GlobalSearchModal | undefined = $state(undefined)
+	let mailboxModal: MailboxModal | undefined = $state(undefined)
 	let isCollapsed = $state(false)
 	let userSettings: UserSettings | undefined = $state()
 	let superadminSettings: SuperadminSettings | undefined = $state()
@@ -284,6 +286,10 @@
 		globalSearchModal?.openSearchWithPrefilledText(text)
 	}
 
+	function openMailbox(): void {
+		mailboxModal?.toggleModal()
+	}
+
 	setContext('openSearchWithPrefilledText', openSearchModal)
 
 	let numUnacknowledgedCriticalAlerts = $state(0)
@@ -408,6 +414,12 @@
 	{/if}
 	{#if mountModal}
 		<CriticalAlertModal bind:muteSettings bind:numUnacknowledgedCriticalAlerts />
+	{/if}
+	{#if $superadmin}
+		<MailboxModal
+			bind:this={mailboxModal}
+			updateUnreadCount={(count) => console.log('Mailbox unread count:', count)}
+		/>
 	{/if}
 	<div class="h-screen flex flex-col">
 		{#if !menuHidden}
@@ -580,6 +592,16 @@
 									iconClasses="!text-ai-inverse dark:!text-ai"
 									shortcut={`${getModifierKey()}L`}
 								/>
+								{#if $superadmin}
+									<MenuButton
+										stopPropagationOnClick={true}
+										on:click={openMailbox}
+										{isCollapsed}
+										icon={Mailbox}
+										label="Mailbox"
+										class="!text-xs"
+									/>
+								{/if}
 							</div>
 
 							<SidebarContent
@@ -693,6 +715,16 @@
 									iconClasses="!text-ai-inverse dark:!text-ai"
 									shortcut={`${getModifierKey()}L`}
 								/>
+								{#if $superadmin}
+									<MenuButton
+										stopPropagationOnClick={true}
+										on:click={openMailbox}
+										{isCollapsed}
+										icon={Mailbox}
+										label="Mailbox"
+										class="!text-xs"
+									/>
+								{/if}
 							</div>
 
 							<SidebarContent

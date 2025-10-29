@@ -97,14 +97,15 @@ impl TriggerCrud for MqttTrigger {
                 script_path, 
                 is_flow, 
                 email, 
-                enabled, 
+                enabled,
+                delivery_method,
                 edited_by,
                 error_handler_path,
                 error_handler_args,
                 retry
             ) 
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
             )"#,
             trigger.config.mqtt_resource_path,
             subscribe_topics.as_slice() as &[SqlxJson<SubscribeTopic>],
@@ -118,6 +119,7 @@ impl TriggerCrud for MqttTrigger {
             trigger.base.is_flow,
             authed.email,
             trigger.base.enabled.unwrap_or(true),
+            trigger.base.delivery_method as _,
             authed.username,
             trigger.error_handling.error_handler_path,
             trigger.error_handling.error_handler_args as _,
@@ -159,20 +161,21 @@ impl TriggerCrud for MqttTrigger {
                 client_id = $4,
                 v3_config = $5,
                 v5_config = $6,
-                is_flow = $7, 
-                edited_by = $8, 
-                email = $9,
-                script_path = $10,
-                path = $11,
+                is_flow = $7,
+                delivery_method = $8,
+                edited_by = $9, 
+                email = $10,
+                script_path = $11,
+                path = $12,
                 edited_at = now(), 
                 error = NULL,
                 server_id = NULL,
-                error_handler_path = $14,
-                error_handler_args = $15,
-                retry = $16
+                error_handler_path = $15,
+                error_handler_args = $16,
+                retry = $17
             WHERE 
-                workspace_id = $12 AND 
-                path = $13
+                workspace_id = $13 AND 
+                path = $14
             "#,
             trigger.config.mqtt_resource_path,
             subscribe_topics.as_slice() as &[SqlxJson<SubscribeTopic>],
@@ -181,6 +184,7 @@ impl TriggerCrud for MqttTrigger {
             v3_config as Option<SqlxJson<MqttV3Config>>,
             v5_config as Option<SqlxJson<MqttV5Config>>,
             trigger.base.is_flow,
+            trigger.base.delivery_method as _,
             authed.username,
             authed.email,
             trigger.base.script_path,

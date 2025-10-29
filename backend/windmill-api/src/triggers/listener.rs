@@ -5,8 +5,8 @@ use crate::{
     db::ApiAuthed,
     triggers::{
         handler::TriggerCrud,
-        trigger_helpers::{trigger_runnable, TriggerJobArgs},
-        Trigger, TriggerErrorHandling,
+        trigger_helpers::{trigger_runnable, DeliveryMethod, TriggerJobArgs},
+        Trigger, TriggerErrorHandling, COMMON_TRIGGER_FIELDS,
     },
     users::fetch_api_authed,
 };
@@ -20,8 +20,9 @@ use sql_builder::SqlBuilder;
 use sqlx::{FromRow, Row};
 use tokio::sync::RwLock;
 use windmill_common::{
-    error::{Error, Result},
+    error::{to_anyhow, Error, Result},
     jobs::JobTriggerKind,
+    mailbox::{Mailbox, MailboxType},
     triggers::TriggerKind,
     utils::report_critical_error,
     DB, INSTANCE_NAME,
@@ -60,20 +61,8 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         &self,
         db: &DB,
     ) -> Result<Vec<ListeningTrigger<Self::TriggerConfig>>> {
-        let mut fields = vec![
-            "workspace_id",
-            "path",
-            "script_path",
-            "is_flow",
-            "edited_by",
-            "email",
-            "edited_at",
-            "extra_perms",
-        ];
+        let mut fields = Vec::from(COMMON_TRIGGER_FIELDS);
 
-        if Self::SUPPORTS_SERVER_STATE {
-            fields.extend_from_slice(&["enabled", "server_id", "last_server_ping", "error"]);
-        }
         fields.extend_from_slice(&["error_handler_path", "error_handler_args", "retry"]);
         fields.extend_from_slice(Self::ADDITIONAL_SELECT_FIELDS);
 
@@ -105,7 +94,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
                 script_path: trigger.base.script_path,
                 trigger_config: trigger.config,
                 error_handling: Some(trigger.error_handling),
-                trigger_mode: true,
+                mode: Mode::Trigger(trigger.base.delivery_method),
             })
             .collect_vec();
 
@@ -152,7 +141,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
                 script_path: "".to_string(),
                 email: capture.email,
                 trigger_config: capture.trigger_config,
-                trigger_mode: false,
+                mode: Mode::Capture,
                 is_flow: capture.is_flow,
                 error_handling: None,
             })
@@ -199,7 +188,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         listening_trigger: &ListeningTrigger<Self::TriggerConfig>,
         error: Option<&str>,
     ) -> Option<()> {
-        if listening_trigger.trigger_mode {
+        if listening_trigger.is_trigger() {
             self.update_trigger_ping(db, listening_trigger, error).await
         } else {
             self.update_capture_ping(db, listening_trigger, error).await
@@ -331,7 +320,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         db: &DB,
         listening_trigger: &ListeningTrigger<Self::TriggerConfig>,
     ) {
-        if listening_trigger.trigger_mode {
+        if listening_trigger.is_trigger() {
             let _ = sqlx::query(&format!(
                 r#"
                 UPDATE 
@@ -379,7 +368,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         listening_trigger: &ListeningTrigger<Self::TriggerConfig>,
         error: String,
     ) {
-        if listening_trigger.trigger_mode {
+        if listening_trigger.is_trigger() {
             let report_status = sqlx::query(&format!(
                 r#"
                     UPDATE 
@@ -529,11 +518,38 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         trigger_info: HashMap<String, Box<RawValue>>,
         extra: Option<Self::Extra>,
     ) -> Result<()> {
-        if listening_trigger.trigger_mode {
-            if let Err(err) = self
-                .handle_trigger(db, listening_trigger, payload, trigger_info, extra)
-                .await
-            {
+        if let Mode::Trigger(delivery_method) = listening_trigger.mode {
+            let result = match delivery_method {
+                DeliveryMethod::RunJob => {
+                    self.handle_trigger(db, listening_trigger, payload, trigger_info, extra)
+                        .await
+                }
+                DeliveryMethod::SendToMailbox => {
+                    let mailbox = Mailbox::open(
+                        Some(&listening_trigger.path),
+                        MailboxType::Trigger,
+                        &listening_trigger.workspace_id,
+                    );
+                    let payload = Self::build_job_args(
+                        &listening_trigger.script_path,
+                        listening_trigger.is_flow,
+                        &listening_trigger.workspace_id,
+                        db,
+                        payload,
+                        trigger_info,
+                    )
+                    .await?;
+                    let payload =
+                        serde_json::to_value(payload).map_err(|e| Error::from(to_anyhow(e)));
+                    let result = match payload {
+                        Ok(payload) => mailbox.push(payload, db).await,
+                        Err(err) => Err::<(), _>(err),
+                    };
+                    result
+                }
+            };
+
+            if let Err(err) = result {
                 report_critical_error(
                     format!(
                         "Failed to trigger job from {} event {}: {:?}",
@@ -798,7 +814,13 @@ where
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
+pub enum Mode {
+    Trigger(DeliveryMethod),
+    Capture,
+}
+
+#[derive(Debug, Clone)]
 pub struct ListeningTrigger<T> {
     pub path: String,
     pub is_flow: bool,
@@ -807,7 +829,7 @@ pub struct ListeningTrigger<T> {
     pub email: String,
     pub trigger_config: T,
     pub script_path: String,
-    pub trigger_mode: bool,
+    pub mode: Mode,
     pub error_handling: Option<TriggerErrorHandling>,
 }
 
@@ -821,6 +843,10 @@ impl<T> ListeningTrigger<T> {
             Some(format!("{}-{}", username, self.path)),
         )
         .await
+    }
+
+    pub fn is_trigger(&self) -> bool {
+        matches!(&self.mode, &Mode::Trigger(_))
     }
 }
 

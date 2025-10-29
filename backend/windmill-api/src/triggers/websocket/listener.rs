@@ -196,7 +196,7 @@ impl Listener for WebsocketTrigger {
         let (mut writer, mut reader) = ws_stream.split();
 
         // send initial messages
-        if listening_trigger.trigger_mode {
+        if listening_trigger.is_trigger() {
             tokio::select! {
                 biased;
                 _ = killpill_rx.recv() => {
@@ -216,7 +216,7 @@ impl Listener for WebsocketTrigger {
             }
         }
 
-        let (return_message_channels, message_sender_handle) = if listening_trigger.trigger_mode
+        let (return_message_channels, message_sender_handle) = if listening_trigger.is_trigger()
             && listening_trigger.trigger_config.can_return_message
         {
             let (send_message_tx, mut rx) = tokio::sync::mpsc::channel::<String>(100);
@@ -250,7 +250,7 @@ impl Listener for WebsocketTrigger {
             _ = self.loop_ping(db, listening_trigger, err_message.clone(), None) => {
             },
             _ = async {
-                    let filters: Vec<Filter> = if listening_trigger.trigger_mode {
+                    let filters: Vec<Filter> = if listening_trigger.is_trigger() {
                         listening_trigger
                             .trigger_config
                             .filters

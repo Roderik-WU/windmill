@@ -1,6 +1,6 @@
 use crate::{
     db::ApiAuthed,
-    triggers::{StandardTriggerQuery, TriggerData},
+    triggers::{COMMON_TRIGGER_FIELDS, StandardTriggerQuery, TriggerData},
 };
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -27,6 +27,8 @@ use windmill_audit::{audit_oss::audit_log, ActionKind};
 use windmill_git_sync::handle_deployment_metadata;
 
 use crate::utils::check_scopes;
+
+
 
 #[async_trait]
 pub trait TriggerCrud: Send + Sync + 'static {
@@ -135,19 +137,14 @@ pub trait TriggerCrud: Send + Sync + 'static {
         workspace_id: &str,
         path: &str,
     ) -> Result<Self::Trigger> {
-        let mut fields = vec![
-            "workspace_id",
-            "path",
-            "script_path",
-            "is_flow",
-            "edited_by",
-            "email",
-            "edited_at",
-            "extra_perms",
-        ];
+        let mut fields = Vec::from(COMMON_TRIGGER_FIELDS);
+
+        if Self::SUPPORTS_ENABLED {
+            fields.push("enabled");
+        }
 
         if Self::SUPPORTS_SERVER_STATE {
-            fields.extend_from_slice(&["enabled", "server_id", "last_server_ping", "error"]);
+            fields.extend_from_slice(&["server_id", "last_server_ping", "error"]);
         }
 
         fields.extend_from_slice(&["error_handler_path", "error_handler_args", "retry"]);
@@ -214,38 +211,57 @@ pub trait TriggerCrud: Send + Sync + 'static {
         path: &str,
         enabled: bool,
     ) -> Result<bool> {
-        if !Self::SUPPORTS_SERVER_STATE {
-            return Err(anyhow::anyhow!(
-                "Enable/disable not supported for this trigger type".to_string(),
-            )
-            .into());
-        }
-
-        let updated = sqlx::query(&format!(
-            r#"
-            UPDATE 
-                {} 
-            SET 
-                enabled = $1,
-                email = $2,
-                edited_by = $3,
-                edited_at = now(),
-                server_id = NULL,
-                error = NULL
-            WHERE 
-                workspace_id = $4 AND 
-                path = $5
-            "#,
-            Self::TABLE_NAME
-        ))
-        .bind(enabled)
-        .bind(&authed.email)
-        .bind(&authed.username)
-        .bind(workspace_id)
-        .bind(path)
-        .execute(&mut *tx)
-        .await?
-        .rows_affected();
+        let updated = if Self::SUPPORTS_SERVER_STATE {
+            sqlx::query(&format!(
+                r#"
+                UPDATE 
+                    {} 
+                SET 
+                    enabled = $1,
+                    email = $2,
+                    edited_by = $3,
+                    edited_at = now(),
+                    server_id = NULL,
+                    error = NULL
+                WHERE 
+                    workspace_id = $4 AND 
+                    path = $5
+                "#,
+                Self::TABLE_NAME
+            ))
+            .bind(enabled)
+            .bind(&authed.email)
+            .bind(&authed.username)
+            .bind(workspace_id)
+            .bind(path)
+            .execute(&mut *tx)
+            .await?
+            .rows_affected()
+        } else {
+            sqlx::query(&format!(
+                r#"
+                UPDATE 
+                    {} 
+                SET 
+                    enabled = $1,
+                    email = $2,
+                    edited_by = $3,
+                    edited_at = now()
+                WHERE 
+                    workspace_id = $4 AND 
+                    path = $5
+                "#,
+                Self::TABLE_NAME
+            ))
+            .bind(enabled)
+            .bind(&authed.email)
+            .bind(&authed.username)
+            .bind(workspace_id)
+            .bind(path)
+            .execute(&mut *tx)
+            .await?
+            .rows_affected()
+        };
 
         Ok(updated > 0)
     }
@@ -287,19 +303,14 @@ pub trait TriggerCrud: Send + Sync + 'static {
         workspace_id: &str,
         query: Option<&StandardTriggerQuery>,
     ) -> Result<Vec<Self::Trigger>> {
-        let mut fields = vec![
-            "workspace_id",
-            "path",
-            "script_path",
-            "is_flow",
-            "edited_by",
-            "email",
-            "edited_at",
-            "extra_perms",
-        ];
+        let mut fields = Vec::from(COMMON_TRIGGER_FIELDS);
+
+        if Self::SUPPORTS_ENABLED {
+            fields.push("enabled");
+        }
 
         if Self::SUPPORTS_SERVER_STATE {
-            fields.extend_from_slice(&["enabled", "server_id", "last_server_ping", "error"]);
+            fields.extend_from_slice(&["server_id", "last_server_ping", "error"]);
         }
 
         fields.extend_from_slice(&["error_handler_path", "error_handler_args", "retry"]);

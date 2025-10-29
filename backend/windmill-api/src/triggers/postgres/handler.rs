@@ -122,6 +122,7 @@ impl TriggerCrud for PostgresTrigger {
                 script_path,
                 is_flow,
                 enabled,
+                delivery_method,
                 edited_by,
                 email,
                 edited_at,
@@ -129,7 +130,7 @@ impl TriggerCrud for PostgresTrigger {
                 error_handler_args,
                 retry
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), $11, $12, $13
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now(), $12, $13, $14
             )
             "#,
             w_id,
@@ -140,6 +141,7 @@ impl TriggerCrud for PostgresTrigger {
             trigger.base.script_path,
             trigger.base.is_flow,
             trigger.base.enabled.unwrap_or(true),
+            trigger.base.delivery_method as _,
             authed.username,
             authed.email,
             trigger.error_handling.error_handler_path,
@@ -221,16 +223,17 @@ impl TriggerCrud for PostgresTrigger {
                 script_path = $4,
                 path = $5,
                 is_flow = $6,
-                edited_by = $7,
-                email = $8,
+                delivery_method = $7,
+                edited_by = $8,
+                email = $9,
                 edited_at = now(),
                 server_id = NULL,
                 error = NULL,
-                error_handler_path = $11,
-                error_handler_args = $12,
-                retry = $13
+                error_handler_path = $12,
+                error_handler_args = $13,
+                retry = $14
             WHERE 
-                workspace_id = $9 AND path = $10
+                workspace_id = $10 AND path = $11
             "#,
             postgres_resource_path,
             replication_slot_name,
@@ -238,6 +241,7 @@ impl TriggerCrud for PostgresTrigger {
             trigger.base.script_path,
             trigger.base.path,
             trigger.base.is_flow,
+            trigger.base.delivery_method as _,
             authed.username,
             authed.email,
             w_id,

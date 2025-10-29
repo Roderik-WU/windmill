@@ -122,6 +122,7 @@ pub mod job_helpers_ee;
 mod job_helpers_oss;
 pub mod job_metrics;
 pub mod jobs;
+mod mailbox;
 #[cfg(all(feature = "oauth2", feature = "private"))]
 pub mod oauth2_ee;
 #[cfg(feature = "oauth2")]
@@ -455,6 +456,7 @@ pub async fn run_server(
                         .nest("/job_metrics", job_metrics::workspaced_service())
                         .nest("/job_helpers", job_helpers_service)
                         .nest("/jobs", jobs::workspaced_service())
+                        .nest("/mailbox", mailbox::workspaced_service())
                         .nest("/oauth", {
                             #[cfg(feature = "oauth2")]
                             {

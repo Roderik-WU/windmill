@@ -33,6 +33,20 @@ pub use listener::start_all_listeners;
 #[allow(unused)]
 pub(crate) use listener::Listener;
 
+use crate::triggers::trigger_helpers::DeliveryMethod;
+
+pub const COMMON_TRIGGER_FIELDS: [&'static str; 9] = [
+    "workspace_id",
+    "path",
+    "script_path",
+    "delivery_method",
+    "is_flow",
+    "edited_by",
+    "email",
+    "edited_at",
+    "extra_perms",
+];
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StandardTriggerQuery {
     pub page: Option<usize>,
@@ -47,16 +61,17 @@ pub struct BaseTrigger {
     pub workspace_id: String,
     pub path: String,
     pub script_path: String,
+    pub enabled: Option<bool>,
     pub is_flow: bool,
     pub edited_by: String,
     pub email: String,
+    pub delivery_method: DeliveryMethod,
     pub edited_at: DateTime<Utc>,
     pub extra_perms: Option<serde_json::Value>,
 }
 
 #[derive(Debug, FromRow, Clone, Serialize, Deserialize)]
 pub struct ServerState {
-    pub enabled: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub server_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -111,6 +126,7 @@ where
 pub struct BaseTriggerData {
     pub path: String,
     pub script_path: String,
+    pub delivery_method: DeliveryMethod,
     pub is_flow: bool,
     pub enabled: Option<bool>,
 }

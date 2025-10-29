@@ -10,6 +10,7 @@
 	import {
 		SqsTriggerService,
 		type AwsAuthResourceType,
+		type DeliveryMethod,
 		type ErrorHandler,
 		type Retry
 	} from '$lib/gen'
@@ -24,6 +25,8 @@
 	import Tabs from '$lib/components/common/tabs/Tabs.svelte'
 	import Tab from '$lib/components/common/tabs/Tab.svelte'
 	import TriggerRetriesAndErrorHandler from '../TriggerRetriesAndErrorHandler.svelte'
+	import Toggle from '$lib/components/Toggle.svelte'
+	import { superadmin } from '$lib/stores'
 
 	interface Props {
 		useDrawer?: boolean
@@ -72,6 +75,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
+	let delivery_method: DeliveryMethod = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -148,6 +152,7 @@
 			edit = false
 			dirtyPath = false
 			enabled = defaultValues?.enabled ?? false
+			delivery_method = defaultValues?.delivery_method ?? 'run_job'
 			error_handler_path = defaultValues?.error_handler_path ?? undefined
 			error_handler_args = defaultValues?.error_handler_args ?? {}
 			retry = defaultValues?.retry ?? undefined
@@ -170,6 +175,7 @@
 			message_attributes = cfg?.message_attributes ?? []
 			path = cfg?.path
 			enabled = cfg?.enabled
+			delivery_method = cfg?.delivery_method ?? 'run_job'
 			aws_auth_resource_type = cfg?.aws_auth_resource_type
 			can_write = canWrite(cfg?.path, cfg?.extra_perms, $userStore)
 			error_handler_path = cfg?.error_handler_path
@@ -208,6 +214,7 @@
 			message_attributes,
 			aws_auth_resource_type,
 			enabled,
+			delivery_method,
 			error_handler_path,
 			error_handler_args,
 			retry
@@ -395,6 +402,26 @@
 				headless={true}
 				showTestingBadge={isEditor}
 			/>
+
+			{#if $superadmin}
+				<Section label="Delivery Method">
+					<div class="flex flex-col gap-2">
+						<p class="text-xs text-tertiary mb-2">
+							Choose whether to execute the trigger immediately or send it to the mailbox for manual
+							handling.
+						</p>
+						<Toggle
+							disabled={!can_write}
+							checked={delivery_method === 'send_to_mailbox'}
+							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							options={{
+								right: 'Send to mailbox instead of executing immediately'
+							}}
+							size="xs"
+						/>
+					</div>
+				</Section>
+			{/if}
 
 			<Section label="Advanced" collapsable>
 				<div class="flex flex-col gap-4">

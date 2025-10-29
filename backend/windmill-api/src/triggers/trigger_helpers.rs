@@ -1,7 +1,7 @@
 use anyhow::Context;
 use axum::response::IntoResponse;
 use http::StatusCode;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use sqlx::types::Json;
 use std::collections::HashMap;
@@ -474,6 +474,14 @@ pub trait TriggerJobArgs {
         let preprocessor_args = Self::build_job_args_v2(true, payload, info);
         (main_args, preprocessor_args)
     }
+}
+
+#[derive(Debug, sqlx::Type, Clone, Copy, Deserialize, Serialize)]
+#[sqlx(type_name = "delivery_method", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
+pub enum DeliveryMethod {
+    RunJob,
+    SendToMailbox,
 }
 
 #[allow(dead_code)]

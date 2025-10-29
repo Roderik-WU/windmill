@@ -603,13 +603,6 @@ paths:
       operationId: getGlobalConnectedRepositories
       tags:
         - Git Sync
-      parameters:
-        - name: search
-          in: query
-          description: Search repositories by name
-          required: false
-          schema:
-            type: string
       responses:
         "200":
           description: connected repositories
@@ -9280,6 +9273,128 @@ paths:
                   - job
                   - approvers
 
+  /w/{workspace}/mailbox/list:
+    get:
+      summary: list mailbox messages
+      operationId: listMailboxMessages
+      tags:
+        - mailbox
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: mailbox_type
+          in: query
+          description: filter by mailbox type
+          schema:
+            type: string
+            enum: [trigger, debouncing_stale_data]
+        - name: mailbox_id
+          in: query
+          description: filter by mailbox id
+          schema:
+            type: string
+        - name: message_id
+          in: query
+          description: filter by specific message id
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          description: page number
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: number of items per page
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+      responses:
+        "200":
+          description: mailbox messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MailboxMessage"
+
+  /w/{workspace}/mailbox/{message_id}:
+    delete:
+      summary: delete mailbox message
+      operationId: deleteMailboxMessage
+      tags:
+        - mailbox
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: message deleted
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /w/{workspace}/mailbox/{message_id}/handle:
+    post:
+      summary: handle mailbox message (execute the trigger's runnable)
+      operationId: handleMailboxMessage
+      tags:
+        - mailbox
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+        - name: message_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: message handled
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /w/{workspace}/mailbox/bulk_delete:
+    delete:
+      summary: bulk delete mailbox messages
+      operationId: bulkDeleteMailboxMessages
+      tags:
+        - mailbox
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message_ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+              required:
+                - message_ids
+      responses:
+        "200":
+          description: messages deleted
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /schedules/preview:
     post:
       summary: preview schedule
@@ -15819,6 +15934,38 @@ components:
       discriminator:
         propertyName: type
 
+    MailboxMessage:
+      type: object
+      properties:
+        message_id:
+          type: integer
+          format: int64
+          description: unique message identifier
+        mailbox_id:
+          type: string
+          nullable: true
+          description: mailbox identifier (e.g., trigger path)
+        workspace_id:
+          type: string
+          description: workspace identifier
+        type:
+          type: string
+          enum: [trigger, debouncing_stale_data]
+          description: type of mailbox message
+        created_at:
+          type: string
+          format: date-time
+          description: when the message was created
+        payload:
+          type: object
+          description: message payload containing execution data
+      required:
+        - message_id
+        - workspace_id
+        - type
+        - created_at
+        - payload
+
     User:
       type: object
       properties:
@@ -16801,6 +16948,12 @@ components:
         - timezone
         - args
 
+    DeliveryMethod:
+      type: string
+      enum:
+        - run_job
+        - send_to_mailbox
+
     TriggerExtraProperty:
       type: object
       properties:
@@ -16823,12 +16976,17 @@ components:
           format: date-time
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
+        enabled:
+          type: boolean
       required:
         - path
         - script_path
         - email
         - extra_perms
         - workspace_id
+        - delivery_method
         - edited_by
         - edited_at
         - is_flow
@@ -17019,6 +17177,8 @@ components:
       properties:
         path:
           type: string
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         script_path:
           type: string
         route_path:
@@ -17084,6 +17244,8 @@ components:
           type: string
         route_path:
           type: string
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         summary:
           type: string
         description:
@@ -17228,6 +17390,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         url:
           type: string
         enabled:
@@ -17265,6 +17429,7 @@ components:
         - script_path
         - url
         - is_flow
+        - delivery_method
         - filters
         - can_return_message
         - can_return_error_result
@@ -17280,6 +17445,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         filters:
           type: array
           items:
@@ -17313,6 +17480,7 @@ components:
         - script_path
         - url
         - is_flow
+        - delivery_method
         - filters
         - can_return_message
         - can_return_error_result
@@ -17440,6 +17608,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         error_handler_path:
@@ -17452,6 +17622,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - subscribe_topics
         - mqtt_resource_path
 
@@ -17478,6 +17649,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         error_handler_path:
@@ -17490,6 +17663,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - enabled
         - subscribe_topics
         - mqtt_resource_path
@@ -17581,6 +17755,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         auto_acknowledge_msg:
@@ -17601,6 +17777,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - gcp_resource_path
         - topic_id
         - subscription_mode
@@ -17725,6 +17902,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         error_handler_path:
@@ -17739,6 +17918,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - aws_auth_resource_type
 
     EditSqsTrigger:
@@ -17760,6 +17940,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         error_handler_path:
@@ -17774,6 +17956,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - enabled
         - aws_auth_resource_type
 
@@ -17898,6 +18081,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         postgres_resource_path:
@@ -17914,6 +18099,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - enabled
         - postgres_resource_path
 
@@ -17930,6 +18116,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         enabled:
           type: boolean
         postgres_resource_path:
@@ -17946,6 +18134,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - enabled
         - postgres_resource_path
         - publication_name
@@ -17995,6 +18184,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         kafka_resource_path:
           type: string
         group_id:
@@ -18016,6 +18207,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - kafka_resource_path
         - group_id
         - topics
@@ -18037,6 +18229,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         error_handler_path:
           type: string
         error_handler_args:
@@ -18051,6 +18245,7 @@ components:
         - group_id
         - topics
         - is_flow
+        - delivery_method
 
     NatsTrigger:
       allOf:
@@ -18100,6 +18295,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         nats_resource_path:
           type: string
         use_jetstream:
@@ -18125,6 +18322,7 @@ components:
         - path
         - script_path
         - is_flow
+        - delivery_method
         - nats_resource_path
         - use_jetstream
         - subjects
@@ -18150,6 +18348,8 @@ components:
           type: string
         is_flow:
           type: boolean
+        delivery_method:
+          $ref: "#/components/schemas/DeliveryMethod"
         error_handler_path:
           type: string
         error_handler_args:
@@ -18164,6 +18364,7 @@ components:
         - use_jetstream
         - subjects
         - is_flow
+        - delivery_method
 
     EmailTrigger:
       allOf:
@@ -19544,18 +19745,10 @@ components:
               required:
                 - name
                 - url
-          total_count:
-            type: number
-            description: Total number of repositories available for this installation
-          per_page:
-            type: number
-            description: Number of repositories loaded per page
         required:
           - installation_id
           - account_id
           - repositories
-          - total_count
-          - per_page
 
     WorkspaceGithubInstallation:
       type: object

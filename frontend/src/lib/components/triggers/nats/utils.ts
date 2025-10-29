@@ -25,6 +25,7 @@ export async function saveNatsTriggerFromCfg(
 		consumer_name: cfg.consumer_name,
 		subjects: cfg.subjects,
 		use_jetstream: cfg.use_jetstream,
+		delivery_method: cfg.delivery_method,
 		...errorHandlerAndRetries
 	}
 	try {

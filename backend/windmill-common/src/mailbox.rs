@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use sqlx::Postgres;
 
 use crate::error;
@@ -18,7 +19,7 @@ pub struct MailboxMsg {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-#[derive(sqlx::Type, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, sqlx::Type, Clone, Copy)]
 #[sqlx(rename_all = "snake_case", type_name = "mailbox_type")]
 pub enum MailboxType {
     Trigger,

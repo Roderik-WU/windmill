@@ -44,6 +44,7 @@ export async function saveHttpRouteFromCfg(
 ): Promise<boolean> {
 	const requestBody: NewHttpTrigger = {
 		path: routeCfg.path,
+		delivery_method: routeCfg.delivery_method,
 		script_path: routeCfg.script_path,
 		is_flow: routeCfg.is_flow,
 		request_type: routeCfg.request_type,

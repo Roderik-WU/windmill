@@ -5,7 +5,7 @@
 	import Path from '$lib/components/Path.svelte'
 	import Required from '$lib/components/Required.svelte'
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
-	import { usedTriggerKinds, userStore, workspaceStore } from '$lib/stores'
+	import { usedTriggerKinds, userStore, workspaceStore, superadmin } from '$lib/stores'
 	import { canWrite, emptyString, sendUserToast } from '$lib/utils'
 	import Section from '$lib/components/Section.svelte'
 	import { Loader2 } from 'lucide-svelte'
@@ -17,7 +17,10 @@
 		type MqttV5Config,
 		type MqttSubscribeTopic,
 		type Retry,
-		type ErrorHandler
+		type ErrorHandler,
+
+		type DeliveryMethod
+
 	} from '$lib/gen'
 	import MqttEditorConfigSection from './MqttEditorConfigSection.svelte'
 	import type { Snippet } from 'svelte'
@@ -80,6 +83,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
+	let delivery_method: DeliveryMethod = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -193,6 +197,7 @@
 			is_flow = cfg?.is_flow
 			path = cfg?.path
 			enabled = cfg?.enabled
+			delivery_method = cfg?.delivery_method ?? 'run_job'
 			client_version = cfg?.client_version
 			v3_config = cfg?.v3_config ?? DEFAULT_V3_CONFIG
 			v5_config = cfg?.v5_config ?? DEFAULT_V5_CONFIG
@@ -237,6 +242,7 @@
 			path,
 			script_path,
 			enabled,
+			delivery_method,
 			is_flow,
 			error_handler_path,
 			error_handler_args,
@@ -426,6 +432,26 @@
 				bind:client_id
 				showTestingBadge={isEditor}
 			/>
+
+			{#if $superadmin}
+				<Section label="Delivery Method">
+					<div class="flex flex-col gap-2">
+						<p class="text-xs text-tertiary mb-2">
+							Choose whether to execute the trigger immediately or send it to the mailbox for manual
+							handling.
+						</p>
+						<Toggle
+							disabled={!can_write}
+							checked={delivery_method === 'send_to_mailbox'}
+							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							options={{
+								right: 'Send to mailbox instead of executing immediately'
+							}}
+							size="xs"
+						/>
+					</div>
+				</Section>
+			{/if}
 
 			<Section label="Advanced" collapsable>
 				<div class="flex flex-col gap-4">

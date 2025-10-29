@@ -7,12 +7,13 @@
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
 	import {
 		PostgresTriggerService,
+		type DeliveryMethod,
 		type ErrorHandler,
 		type Language,
 		type Relations,
 		type Retry
 	} from '$lib/gen'
-	import { usedTriggerKinds, userStore, workspaceStore } from '$lib/stores'
+	import { usedTriggerKinds, userStore, workspaceStore, superadmin } from '$lib/stores'
 	import { canWrite, emptyString, emptyStringTrimmed, sendUserToast } from '$lib/utils'
 	import Section from '$lib/components/Section.svelte'
 	import { Loader2 } from 'lucide-svelte'
@@ -21,6 +22,7 @@
 	import Tooltip from '$lib/components/Tooltip.svelte'
 	import ToggleButton from '$lib/components/common/toggleButton-v2/ToggleButton.svelte'
 	import ToggleButtonGroup from '$lib/components/common/toggleButton-v2/ToggleButtonGroup.svelte'
+	import Toggle from '$lib/components/Toggle.svelte'
 	import PublicationPicker from './PublicationPicker.svelte'
 	import SlotPicker from './SlotPicker.svelte'
 	import { random_adj } from '$lib/components/random_positive_adjetive'
@@ -86,6 +88,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled: boolean = $state(false)
+	let delivery_method: DeliveryMethod = $state('run_job')
 	let dirtyPath: boolean = $state(false)
 	let can_write: boolean = $state(true)
 	let drawerLoading: boolean = $state(true)
@@ -287,6 +290,8 @@
 			initialScriptPath: initialScriptPath,
 			is_flow: is_flow,
 			path: path,
+			enabled: enabled,
+			delivery_method: delivery_method,
 			postgres_resource_path: postgres_resource_path,
 			publication_name: edit || tab === 'advanced' ? publication_name : undefined,
 			replication_slot_name: edit || tab === 'advanced' ? replication_slot_name : undefined,
@@ -310,6 +315,7 @@
 		is_flow = cfg?.is_flow
 		path = cfg?.path
 		enabled = cfg?.enabled
+		delivery_method = cfg?.delivery_method ?? 'run_job'
 		postgres_resource_path = cfg?.postgres_resource_path
 		publication_name = cfg?.publication_name
 		replication_slot_name = cfg?.replication_slot_name
@@ -801,6 +807,26 @@
 					{/if}
 				</div>
 			</Section>
+
+			{#if $superadmin}
+				<Section label="Delivery Method">
+					<div class="flex flex-col gap-2">
+						<p class="text-xs text-tertiary mb-2">
+							Choose whether to execute the trigger immediately or send it to the mailbox for manual
+							handling.
+						</p>
+						<Toggle
+							disabled={!can_write}
+							checked={delivery_method === 'send_to_mailbox'}
+							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							options={{
+								right: 'Send to mailbox instead of executing immediately'
+							}}
+							size="xs"
+						/>
+					</div>
+				</Section>
+			{/if}
 
 			<Section label="Advanced" collapsable>
 				<div class="flex flex-col gap-4">

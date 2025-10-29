@@ -5,12 +5,13 @@
 	import Path from '$lib/components/Path.svelte'
 	import Required from '$lib/components/Required.svelte'
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
-	import { NatsTriggerService, type ErrorHandler, type Retry } from '$lib/gen'
-	import { usedTriggerKinds, userStore, workspaceStore } from '$lib/stores'
+	import { NatsTriggerService, type DeliveryMethod, type ErrorHandler, type Retry } from '$lib/gen'
+	import { usedTriggerKinds, userStore, workspaceStore, superadmin } from '$lib/stores'
 	import { canWrite, emptyString, sendUserToast } from '$lib/utils'
 	import Section from '$lib/components/Section.svelte'
 	import { Loader2 } from 'lucide-svelte'
 	import Label from '$lib/components/Label.svelte'
+	import Toggle from '$lib/components/Toggle.svelte'
 	import NatsTriggersConfigSection from './NatsTriggersConfigSection.svelte'
 	import { untrack, type Snippet } from 'svelte'
 	import TriggerEditorToolbar from '../TriggerEditorToolbar.svelte'
@@ -68,6 +69,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
+	let delivery_method: DeliveryMethod = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -185,6 +187,7 @@
 			consumer_name: useJetstream ? cfg?.consumer_name || '' : undefined
 		}
 		enabled = cfg?.enabled
+		delivery_method = cfg?.delivery_method ?? 'run_job'
 		can_write = canWrite(cfg?.path, cfg?.extra_perms, $userStore)
 		error_handler_path = cfg?.error_handler_path
 		error_handler_args = cfg?.error_handler_args ?? {}
@@ -211,6 +214,7 @@
 			script_path,
 			is_flow,
 			enabled,
+			delivery_method,
 			nats_resource_path: natsResourcePath,
 			stream_name: natsCfg.stream_name,
 			consumer_name: natsCfg.consumer_name,
@@ -409,6 +413,26 @@
 				{can_write}
 				showTestingBadge={isEditor}
 			/>
+
+			{#if $superadmin}
+				<Section label="Delivery Method">
+					<div class="flex flex-col gap-2">
+						<p class="text-xs text-tertiary mb-2">
+							Choose whether to execute the trigger immediately or send it to the mailbox for manual
+							handling.
+						</p>
+						<Toggle
+							disabled={!can_write}
+							checked={delivery_method === 'send_to_mailbox'}
+							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							options={{
+								right: 'Send to mailbox instead of executing immediately'
+							}}
+							size="xs"
+						/>
+					</div>
+				</Section>
+			{/if}
 
 			<Section label="Advanced" collapsable>
 				<div class="flex flex-col gap-4">

@@ -12,7 +12,7 @@ use windmill_common::{
     DB,
 };
 
-use crate::{db::ApiAuthed, triggers::trigger_helpers::DeliveryMethod, utils::ExpiringCacheEntry};
+use crate::{db::ApiAuthed, triggers::trigger_helpers::ActionToTake, utils::ExpiringCacheEntry};
 
 pub mod handler;
 pub mod http_trigger_args;
@@ -33,8 +33,7 @@ pub struct TriggerRoute {
     path: String,
     script_path: String,
     is_flow: bool,
-    enabled: Option<bool>,
-    delivery_method: DeliveryMethod,
+    action_to_take: ActionToTake,
     route_path: String,
     workspace_id: String,
     request_type: RequestType,
@@ -246,12 +245,11 @@ pub async fn refresh_routers(db: &DB) -> Result<(bool, RwLockReadGuard<'_, Route
                         script_path,
                         is_flow,
                         route_path,
-                        enabled,
                         authentication_resource_path,
                         workspace_id,
                         request_type AS "request_type: _",
                         authentication_method AS "authentication_method: _",
-                        delivery_method AS "delivery_method: _",
+                        action_to_take AS "action_to_take: _",
                         edited_by,
                         email,
                         static_asset_config AS "static_asset_config: _",

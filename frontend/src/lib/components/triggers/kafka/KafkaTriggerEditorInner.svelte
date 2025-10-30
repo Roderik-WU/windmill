@@ -5,7 +5,7 @@
 	import Path from '$lib/components/Path.svelte'
 	import Required from '$lib/components/Required.svelte'
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
-	import { KafkaTriggerService, type DeliveryMethod, type ErrorHandler, type Retry } from '$lib/gen'
+	import { KafkaTriggerService, type ActionToTake, type ErrorHandler, type Retry } from '$lib/gen'
 	import { usedTriggerKinds, userStore, workspaceStore, superadmin } from '$lib/stores'
 	import { canWrite, emptyString, sendUserToast } from '$lib/utils'
 	import Section from '$lib/components/Section.svelte'
@@ -68,7 +68,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -184,7 +184,7 @@
 			topics: cfg?.topics
 		}
 		enabled = cfg?.enabled
-		delivery_method = cfg?.delivery_method ?? 'run_job'
+		action_to_take = cfg?.action_to_take ?? 'run_job'
 		extra_perms = cfg?.extra_perms
 		can_write = canWrite(path, cfg?.extra_perms, $userStore)
 		error_handler_path = cfg?.error_handler_path
@@ -215,7 +215,7 @@
 			group_id: kafkaCfg.group_id,
 			topics: kafkaCfg.topics,
 			enabled,
-			delivery_method,
+			action_to_take,
 			extra_perms: extra_perms,
 			error_handler_path,
 			error_handler_args,
@@ -406,8 +406,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

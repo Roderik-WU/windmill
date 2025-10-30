@@ -5,7 +5,7 @@
 	import Path from '$lib/components/Path.svelte'
 	import Required from '$lib/components/Required.svelte'
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
-	import { NatsTriggerService, type DeliveryMethod, type ErrorHandler, type Retry } from '$lib/gen'
+	import { NatsTriggerService, type ActionToTake, type ErrorHandler, type Retry } from '$lib/gen'
 	import { usedTriggerKinds, userStore, workspaceStore, superadmin } from '$lib/stores'
 	import { canWrite, emptyString, sendUserToast } from '$lib/utils'
 	import Section from '$lib/components/Section.svelte'
@@ -69,7 +69,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -187,7 +187,7 @@
 			consumer_name: useJetstream ? cfg?.consumer_name || '' : undefined
 		}
 		enabled = cfg?.enabled
-		delivery_method = cfg?.delivery_method ?? 'run_job'
+		action_to_take = cfg?.action_to_take ?? 'run_job'
 		can_write = canWrite(cfg?.path, cfg?.extra_perms, $userStore)
 		error_handler_path = cfg?.error_handler_path
 		error_handler_args = cfg?.error_handler_args ?? {}
@@ -214,7 +214,7 @@
 			script_path,
 			is_flow,
 			enabled,
-			delivery_method,
+			action_to_take,
 			nats_resource_path: natsResourcePath,
 			stream_name: natsCfg.stream_name,
 			consumer_name: natsCfg.consumer_name,
@@ -423,8 +423,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

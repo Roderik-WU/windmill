@@ -14,7 +14,7 @@ use crate::{
         },
         trigger_helpers::{
             get_runnable_format, trigger_runnable, trigger_runnable_and_wait_for_result,
-            trigger_runnable_inner, DeliveryMethod, RunnableId,
+            trigger_runnable_inner, ActionToTake, RunnableId,
         },
         Trigger, TriggerCrud, TriggerData,
     },
@@ -197,8 +197,7 @@ pub async fn insert_new_trigger_into_db(
                 summary,
                 description,
                 is_flow,
-                enabled,
-                delivery_method,
+                action_to_take,
                 request_type,
                 authentication_method,
                 http_method,
@@ -212,7 +211,7 @@ pub async fn insert_new_trigger_into_db(
                 retry
             )
             VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, now(), $21, $22, $23, $24
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, now(), $20, $21, $22, $23
             )
             "#,
             w_id,
@@ -227,8 +226,7 @@ pub async fn insert_new_trigger_into_db(
             trigger.config.summary,
             trigger.config.description,
             trigger.base.is_flow,
-            trigger.base.enabled.unwrap_or(true),
-            trigger.base.delivery_method as _,
+            trigger.base.action_to_take as _,
             request_type as _,
             trigger.config.authentication_method as _,
             trigger.config.http_method as _,
@@ -361,7 +359,7 @@ impl TriggerCrud for HttpTrigger {
 
     const TABLE_NAME: &'static str = "http_trigger";
     const TRIGGER_TYPE: &'static str = "http";
-    const SUPPORTS_ENABLED: bool = true;
+    const SUPPORTS_ENABLED: bool = false;
     const SUPPORTS_SERVER_STATE: bool = false;
     const SUPPORTS_TEST_CONNECTION: bool = false;
     const ROUTE_PREFIX: &'static str = "/http_triggers";
@@ -487,24 +485,23 @@ impl TriggerCrud for HttpTrigger {
                 script_path = $7,
                 path = $8,
                 is_flow = $9,
-                enabled = $10,
-                delivery_method = $11,
-                http_method = $12,
-                static_asset_config = $13,
-                edited_by = $14,
-                email = $15,
-                request_type = $16,
-                authentication_method = $17,
-                summary = $18,
-                description = $19,
+                action_to_take = $10,
+                http_method = $11,
+                static_asset_config = $12,
+                edited_by = $13,
+                email = $14,
+                request_type = $15,
+                authentication_method = $16,
+                summary = $17,
+                description = $18,
                 edited_at = now(),
-                is_static_website = $20,
-                error_handler_path = $21,
-                error_handler_args = $22,
-                retry = $23
+                is_static_website = $19,
+                error_handler_path = $20,
+                error_handler_args = $21,
+                retry = $22
             WHERE
-                workspace_id = $24 AND
-                path = $25
+                workspace_id = $23 AND
+                path = $24
             "#,
                 route_path,
                 &route_path_key,
@@ -515,8 +512,7 @@ impl TriggerCrud for HttpTrigger {
                 trigger.base.script_path,
                 trigger.base.path,
                 trigger.base.is_flow,
-                trigger.base.enabled,
-                trigger.base.delivery_method as _,
+                trigger.base.action_to_take as _,
                 trigger.config.http_method as _,
                 trigger.config.static_asset_config as _,
                 &authed.username,
@@ -548,24 +544,23 @@ impl TriggerCrud for HttpTrigger {
                 script_path = $4,
                 path = $5,
                 is_flow = $6,
-                enabled = $7,
-                delivery_method = $8,
-                http_method = $9,
-                static_asset_config = $10,
-                edited_by = $11,
-                email = $12,
-                request_type = $13,
-                authentication_method = $14,
-                summary = $15,
-                description = $16,
+                action_to_take = $7,
+                http_method = $8,
+                static_asset_config = $9,
+                edited_by = $10,
+                email = $11,
+                request_type = $12,
+                authentication_method = $13,
+                summary = $14,
+                description = $15,
                 edited_at = now(),
-                is_static_website = $17,
-                error_handler_path = $18,
-                error_handler_args = $19,
-                retry = $20
+                is_static_website = $16,
+                error_handler_path = $17,
+                error_handler_args = $18,
+                retry = $19
             WHERE
-                workspace_id = $21 AND
-                path = $22
+                workspace_id = $20 AND
+                path = $21
             "#,
                 trigger.config.wrap_body,
                 trigger.config.raw_string,
@@ -573,8 +568,7 @@ impl TriggerCrud for HttpTrigger {
                 trigger.base.script_path,
                 trigger.base.path,
                 trigger.base.is_flow,
-                trigger.base.enabled as _,
-                trigger.base.delivery_method as _,
+                trigger.base.action_to_take as _,
                 trigger.config.http_method as _,
                 trigger.config.static_asset_config as _,
                 &authed.username,
@@ -597,43 +591,6 @@ impl TriggerCrud for HttpTrigger {
         increase_trigger_version(tx).await?;
 
         Ok(())
-    }
-
-    async fn set_enabled(
-        &self,
-        authed: &ApiAuthed,
-        tx: &mut PgConnection,
-        workspace_id: &str,
-        path: &str,
-        enabled: bool,
-    ) -> Result<bool> {
-        let updated = sqlx::query(&format!(
-            r#"
-                UPDATE 
-                    {} 
-                SET 
-                    enabled = $1,
-                    email = $2,
-                    edited_by = $3,
-                    edited_at = now()
-                WHERE 
-                    workspace_id = $4 AND 
-                    path = $5
-                "#,
-            Self::TABLE_NAME
-        ))
-        .bind(enabled)
-        .bind(&authed.email)
-        .bind(&authed.username)
-        .bind(workspace_id)
-        .bind(path)
-        .execute(&mut *tx)
-        .await?
-        .rows_affected();
-
-        increase_trigger_version(tx).await?;
-
-        Ok(updated > 0)
     }
 
     async fn delete_by_path(
@@ -866,14 +823,6 @@ async fn route_job(
     .await
     .map_err(|e| e.into_response())?;
 
-    if !trigger.enabled.unwrap_or(false) {
-        return Err(Error::BadRequest(format!(
-            "Http trigger at path: {} is disabled",
-            trigger.path
-        ))
-        .into_response());
-    }
-
     if trigger.script_path.is_empty() && trigger.static_asset_config.is_none() {
         return Err(Error::NotFound(format!(
             "Runnable path of HTTP route at path: {}",
@@ -1091,8 +1040,8 @@ async fn route_job(
         )
         .map_err(|e| e.into_response())?;
 
-    match trigger.delivery_method {
-        DeliveryMethod::SendToMailbox => {
+    match trigger.action_to_take {
+        ActionToTake::SendToMailbox => {
             let mailbox = Mailbox::open(
                 Some(&trigger.path),
                 MailboxType::Trigger,
@@ -1116,7 +1065,7 @@ async fn route_job(
                 }
             }
         }
-        DeliveryMethod::RunJob => {
+        ActionToTake::RunJob => {
             // Handle execution based on the execution mode
             match trigger.request_type {
                 RequestType::SyncSse => {

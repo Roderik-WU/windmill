@@ -7,7 +7,7 @@
 	import ScriptPicker from '$lib/components/ScriptPicker.svelte'
 	import {
 		PostgresTriggerService,
-		type DeliveryMethod,
+		type ActionToTake,
 		type ErrorHandler,
 		type Language,
 		type Relations,
@@ -88,7 +88,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled: boolean = $state(false)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let dirtyPath: boolean = $state(false)
 	let can_write: boolean = $state(true)
 	let drawerLoading: boolean = $state(true)
@@ -291,7 +291,7 @@
 			is_flow: is_flow,
 			path: path,
 			enabled: enabled,
-			delivery_method: delivery_method,
+			action_to_take: action_to_take,
 			postgres_resource_path: postgres_resource_path,
 			publication_name: edit || tab === 'advanced' ? publication_name : undefined,
 			replication_slot_name: edit || tab === 'advanced' ? replication_slot_name : undefined,
@@ -315,7 +315,7 @@
 		is_flow = cfg?.is_flow
 		path = cfg?.path
 		enabled = cfg?.enabled
-		delivery_method = cfg?.delivery_method ?? 'run_job'
+		action_to_take = cfg?.action_to_take ?? 'run_job'
 		postgres_resource_path = cfg?.postgres_resource_path
 		publication_name = cfg?.publication_name
 		replication_slot_name = cfg?.replication_slot_name
@@ -817,8 +817,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

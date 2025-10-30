@@ -16,7 +16,7 @@ export async function saveWebsocketTriggerFromCfg(
 				error_handler_args: triggerCfg.error_handler_path
 					? triggerCfg.error_handler_args
 					: undefined,
-				retry: triggerCfg.retry,
+				retry: triggerCfg.retry
 			}
 		: {}
 	const requestBody: EditWebsocketTrigger = {
@@ -29,7 +29,7 @@ export async function saveWebsocketTriggerFromCfg(
 		url_runnable_args: triggerCfg.url_runnable_args,
 		can_return_message: triggerCfg.can_return_message,
 		can_return_error_result: triggerCfg.can_return_error_result,
-		delivery_method: triggerCfg.delivery_method,
+		action_to_take: triggerCfg.action_to_take,
 		...errorHandlerAndRetries
 	}
 	try {

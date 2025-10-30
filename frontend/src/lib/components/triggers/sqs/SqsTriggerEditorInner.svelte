@@ -10,7 +10,7 @@
 	import {
 		SqsTriggerService,
 		type AwsAuthResourceType,
-		type DeliveryMethod,
+		type ActionToTake,
 		type ErrorHandler,
 		type Retry
 	} from '$lib/gen'
@@ -75,7 +75,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -152,7 +152,7 @@
 			edit = false
 			dirtyPath = false
 			enabled = defaultValues?.enabled ?? false
-			delivery_method = defaultValues?.delivery_method ?? 'run_job'
+			action_to_take = defaultValues?.action_to_take ?? 'run_job'
 			error_handler_path = defaultValues?.error_handler_path ?? undefined
 			error_handler_args = defaultValues?.error_handler_args ?? {}
 			retry = defaultValues?.retry ?? undefined
@@ -175,7 +175,7 @@
 			message_attributes = cfg?.message_attributes ?? []
 			path = cfg?.path
 			enabled = cfg?.enabled
-			delivery_method = cfg?.delivery_method ?? 'run_job'
+			action_to_take = cfg?.action_to_take ?? 'run_job'
 			aws_auth_resource_type = cfg?.aws_auth_resource_type
 			can_write = canWrite(cfg?.path, cfg?.extra_perms, $userStore)
 			error_handler_path = cfg?.error_handler_path
@@ -214,7 +214,7 @@
 			message_attributes,
 			aws_auth_resource_type,
 			enabled,
-			delivery_method,
+			action_to_take,
 			error_handler_path,
 			error_handler_args,
 			retry
@@ -412,8 +412,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

@@ -477,9 +477,9 @@ pub trait TriggerJobArgs {
 }
 
 #[derive(Debug, sqlx::Type, Clone, Copy, Deserialize, Serialize)]
-#[sqlx(type_name = "delivery_method", rename_all = "snake_case")]
+#[sqlx(type_name = "action_to_take", rename_all = "snake_case")]
 #[serde(rename_all = "snake_case")]
-pub enum DeliveryMethod {
+pub enum ActionToTake {
     RunJob,
     SendToMailbox,
 }

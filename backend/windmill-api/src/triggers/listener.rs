@@ -5,7 +5,7 @@ use crate::{
     db::ApiAuthed,
     triggers::{
         handler::TriggerCrud,
-        trigger_helpers::{trigger_runnable, DeliveryMethod, TriggerJobArgs},
+        trigger_helpers::{trigger_runnable, ActionToTake, TriggerJobArgs},
         Trigger, TriggerErrorHandling, COMMON_TRIGGER_FIELDS,
     },
     users::fetch_api_authed,
@@ -94,7 +94,7 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
                 script_path: trigger.base.script_path,
                 trigger_config: trigger.config,
                 error_handling: Some(trigger.error_handling),
-                mode: Mode::Trigger(trigger.base.delivery_method),
+                mode: Mode::Trigger(trigger.base.action_to_take),
             })
             .collect_vec();
 
@@ -518,13 +518,13 @@ pub trait Listener: TriggerCrud + TriggerJobArgs {
         trigger_info: HashMap<String, Box<RawValue>>,
         extra: Option<Self::Extra>,
     ) -> Result<()> {
-        if let Mode::Trigger(delivery_method) = listening_trigger.mode {
-            let result = match delivery_method {
-                DeliveryMethod::RunJob => {
+        if let Mode::Trigger(action_to_take) = listening_trigger.mode {
+            let result = match action_to_take {
+                ActionToTake::RunJob => {
                     self.handle_trigger(db, listening_trigger, payload, trigger_info, extra)
                         .await
                 }
-                DeliveryMethod::SendToMailbox => {
+                ActionToTake::SendToMailbox => {
                     let mailbox = Mailbox::open(
                         Some(&listening_trigger.path),
                         MailboxType::Trigger,
@@ -816,7 +816,7 @@ where
 
 #[derive(Debug, Clone)]
 pub enum Mode {
-    Trigger(DeliveryMethod),
+    Trigger(ActionToTake),
     Capture,
 }
 

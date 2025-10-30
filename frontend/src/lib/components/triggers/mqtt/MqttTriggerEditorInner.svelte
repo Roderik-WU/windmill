@@ -18,9 +18,7 @@
 		type MqttSubscribeTopic,
 		type Retry,
 		type ErrorHandler,
-
-		type DeliveryMethod
-
+		type ActionToTake
 	} from '$lib/gen'
 	import MqttEditorConfigSection from './MqttEditorConfigSection.svelte'
 	import type { Snippet } from 'svelte'
@@ -83,7 +81,7 @@
 	let path: string = $state('')
 	let pathError = $state('')
 	let enabled = $state(false)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let dirtyPath = $state(false)
 	let can_write = $state(true)
 	let drawerLoading = $state(true)
@@ -197,7 +195,7 @@
 			is_flow = cfg?.is_flow
 			path = cfg?.path
 			enabled = cfg?.enabled
-			delivery_method = cfg?.delivery_method ?? 'run_job'
+			action_to_take = cfg?.action_to_take ?? 'run_job'
 			client_version = cfg?.client_version
 			v3_config = cfg?.v3_config ?? DEFAULT_V3_CONFIG
 			v5_config = cfg?.v5_config ?? DEFAULT_V5_CONFIG
@@ -242,7 +240,7 @@
 			path,
 			script_path,
 			enabled,
-			delivery_method,
+			action_to_take,
 			is_flow,
 			error_handler_path,
 			error_handler_args,
@@ -442,8 +440,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

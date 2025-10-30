@@ -9,7 +9,7 @@
 		HttpTriggerService,
 		VariableService,
 		type AuthenticationMethod,
-		type DeliveryMethod,
+		type ActionToTake,
 		type ErrorHandler,
 		type HttpTrigger,
 		type NewHttpTrigger,
@@ -84,7 +84,7 @@
 	let static_asset_config = $state<{ s3: string; storage?: string; filename?: string } | undefined>(
 		undefined
 	)
-	let delivery_method: DeliveryMethod = $state('run_job')
+	let action_to_take: ActionToTake = $state('run_job')
 	let is_static_website = $state(false)
 	let s3FileUploadRawMode = $state(false)
 	let workspaced_route = $state(false)
@@ -270,7 +270,7 @@
 		wrap_body = cfg?.wrap_body ?? false
 		raw_string = cfg?.raw_string ?? false
 		summary = cfg?.summary ?? ''
-		delivery_method = cfg?.delivery_method ?? 'run_job'
+		action_to_take = cfg?.action_to_take ?? 'run_job'
 		routeDescription = cfg?.description ?? ''
 		authentication_resource_path = cfg?.authentication_resource_path ?? ''
 		if (cfg?.authentication_method === 'custom_script') {
@@ -347,7 +347,7 @@
 			http_method,
 			request_type,
 			workspaced_route,
-			delivery_method,
+			action_to_take,
 			wrap_body,
 			raw_string,
 			authentication_resource_path,
@@ -610,7 +610,7 @@
 			/>
 
 			{#if $superadmin}
-				<Section label="Delivery Method">
+				<Section label="Action to take">
 					<div class="flex flex-col gap-2">
 						<p class="text-xs text-tertiary mb-2">
 							Choose whether to execute the trigger immediately or send it to the mailbox for manual
@@ -618,8 +618,8 @@
 						</p>
 						<Toggle
 							disabled={!can_write}
-							checked={delivery_method === 'send_to_mailbox'}
-							on:change={(e) => (delivery_method = e.detail ? 'send_to_mailbox' : 'run_job')}
+							checked={action_to_take === 'send_to_mailbox'}
+							on:change={(e) => (action_to_take = e.detail ? 'send_to_mailbox' : 'run_job')}
 							options={{
 								right: 'Send to mailbox instead of executing immediately'
 							}}

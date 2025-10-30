@@ -16948,7 +16948,7 @@ components:
         - timezone
         - args
 
-    DeliveryMethod:
+    ActionToTake:
       type: string
       enum:
         - run_job
@@ -16976,8 +16976,8 @@ components:
           format: date-time
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
       required:
@@ -16986,7 +16986,7 @@ components:
         - email
         - extra_perms
         - workspace_id
-        - delivery_method
+        - action_to_take
         - edited_by
         - edited_at
         - is_flow
@@ -17177,8 +17177,8 @@ components:
       properties:
         path:
           type: string
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         script_path:
           type: string
         route_path:
@@ -17244,8 +17244,8 @@ components:
           type: string
         route_path:
           type: string
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         summary:
           type: string
         description:
@@ -17390,8 +17390,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         url:
           type: string
         enabled:
@@ -17429,7 +17429,7 @@ components:
         - script_path
         - url
         - is_flow
-        - delivery_method
+        - action_to_take
         - filters
         - can_return_message
         - can_return_error_result
@@ -17445,8 +17445,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         filters:
           type: array
           items:
@@ -17480,7 +17480,7 @@ components:
         - script_path
         - url
         - is_flow
-        - delivery_method
+        - action_to_take
         - filters
         - can_return_message
         - can_return_error_result
@@ -17608,8 +17608,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         error_handler_path:
@@ -17622,7 +17622,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - subscribe_topics
         - mqtt_resource_path
 
@@ -17649,8 +17649,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         error_handler_path:
@@ -17663,7 +17663,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - enabled
         - subscribe_topics
         - mqtt_resource_path
@@ -17755,8 +17755,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         auto_acknowledge_msg:
@@ -17777,7 +17777,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - gcp_resource_path
         - topic_id
         - subscription_mode
@@ -17902,8 +17902,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         error_handler_path:
@@ -17918,7 +17918,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - aws_auth_resource_type
 
     EditSqsTrigger:
@@ -17940,8 +17940,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         error_handler_path:
@@ -17956,7 +17956,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - enabled
         - aws_auth_resource_type
 
@@ -18081,8 +18081,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         postgres_resource_path:
@@ -18099,7 +18099,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - enabled
         - postgres_resource_path
 
@@ -18116,8 +18116,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         enabled:
           type: boolean
         postgres_resource_path:
@@ -18134,7 +18134,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - enabled
         - postgres_resource_path
         - publication_name
@@ -18184,8 +18184,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         kafka_resource_path:
           type: string
         group_id:
@@ -18207,7 +18207,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - kafka_resource_path
         - group_id
         - topics
@@ -18229,8 +18229,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         error_handler_path:
           type: string
         error_handler_args:
@@ -18245,7 +18245,7 @@ components:
         - group_id
         - topics
         - is_flow
-        - delivery_method
+        - action_to_take
 
     NatsTrigger:
       allOf:
@@ -18295,8 +18295,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         nats_resource_path:
           type: string
         use_jetstream:
@@ -18322,7 +18322,7 @@ components:
         - path
         - script_path
         - is_flow
-        - delivery_method
+        - action_to_take
         - nats_resource_path
         - use_jetstream
         - subjects
@@ -18348,8 +18348,8 @@ components:
           type: string
         is_flow:
           type: boolean
-        delivery_method:
-          $ref: "#/components/schemas/DeliveryMethod"
+        action_to_take:
+          $ref: "#/components/schemas/ActionToTake"
         error_handler_path:
           type: string
         error_handler_args:
@@ -18364,7 +18364,7 @@ components:
         - use_jetstream
         - subjects
         - is_flow
-        - delivery_method
+        - action_to_take
 
     EmailTrigger:
       allOf:

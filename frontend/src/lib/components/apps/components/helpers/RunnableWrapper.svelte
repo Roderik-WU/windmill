@@ -142,7 +142,7 @@
 		runnableComponent?.setArgs(value)
 	}
 
-	const { staticExporter, initialized, noBackend, componentControl, runnableComponents } =
+	const { staticExporter, initialized, noBackend, componentControl, runnableComponents, workspace } =
 		getContext<AppViewerContext>('AppViewerContext')
 	const iterContext = getContext<ListContext>('ListWrapperContext')
 	const rowContext = getContext<ListContext>('RowWrapperContext')
@@ -339,8 +339,11 @@
 					}
 
 					const isBase64 = (str: string) => {
+						if (!str || str.length % 4 !== 0) {
+							return false
+						}
 						try {
-							return btoa(atob(str)) === str
+							return /^[A-Za-z0-9+/]*={0,2}$/.test(str) && btoa(atob(str)) === str
 						} catch (err) {
 							return false
 						}
@@ -358,11 +361,10 @@
 					}
 
 					if (typeof s3FileInput === 'object' && 's3' in s3FileInput) {
-						const workspaceId = ($appViewerContext as any)?.workspace
-						const s3href = `/api/w/${workspaceId}/job_helpers/download_s3_file?file_key=${encodeURIComponent(
+						const s3href = `/api/w/${workspace}/job_helpers/download_s3_file?file_key=${encodeURIComponent(
 							s3FileInput?.s3 ?? ''
 						)}${s3FileInput?.storage ? `&storage=${s3FileInput.storage}` : ''}`
-						downloadFile(s3href, fileName || s3FileInput.s3)
+						downloadFile(s3href, fileName || s3FileInput.s3.split('/').pop())
 					} else if (typeof s3FileInput === 'string') {
 						if (s3FileInput.startsWith('data:')) {
 							downloadFile(s3FileInput, fileName)

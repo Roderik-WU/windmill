@@ -347,7 +347,6 @@
 					}
 
 					const downloadFile = (url: string, downloadFilename?: string) => {
-						console.log(url, downloadFilename)
 						const link = document.createElement('a')
 						link.href = url
 						link.download = downloadFilename || 'download'
@@ -374,7 +373,6 @@
 							const url = s3FileInput.startsWith('/')
 								? `${window.location.origin}${s3FileInput}`
 								: s3FileInput
-							console.log('Downloading file from:', url)
 							downloadFile(url, fileName ?? s3FileInput.split('/').pop()?.split('?')[0])
 						} else {
 							handleError(

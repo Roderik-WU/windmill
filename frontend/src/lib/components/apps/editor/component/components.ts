@@ -549,7 +549,8 @@ const labels = {
 	close: 'Close a modal or a drawer',
 	openModal: 'Open a modal (deprecated)',
 	closeModal: 'Close a modal (deprecated)',
-	clearFiles: 'Clear files from a S3 file input'
+	clearFiles: 'Clear files from a S3 file input',
+	downloadFile: 'Download a file'
 }
 
 const onSuccessClick = {
@@ -635,6 +636,24 @@ const onSuccessClick = {
 				fieldType: 'text',
 				type: 'static',
 				value: ''
+			}
+		},
+		downloadFile: {
+			s3FileInput: {
+				tooltip: 'S3 file path or object with s3 property',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: '{s3: "path/to/file.pdf"}',
+				onDemandOnly: true
+			},
+			fileName: {
+				tooltip: 'Optional file name for download',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: 'document.pdf',
+				onDemandOnly: true
 			}
 		}
 	}
@@ -724,6 +743,24 @@ const onSubmitClick = {
 				type: 'static',
 				value: ''
 			}
+		},
+		downloadFile: {
+			s3FileInput: {
+				tooltip: 'S3 file path or object with s3 property',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: '{s3: "path/to/file.pdf"}',
+				onDemandOnly: true
+			},
+			fileName: {
+				tooltip: 'Optional file name for download',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: 'document.pdf',
+				onDemandOnly: true
+			}
 		}
 	}
 } as const
@@ -793,6 +830,24 @@ const onErrorClick = {
 				type: 'static',
 				value: '',
 				noVariablePicker: true
+			}
+		},
+		downloadFile: {
+			s3FileInput: {
+				tooltip: 'S3 file path or object with s3 property',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: '{s3: "path/to/file.pdf"}',
+				onDemandOnly: true
+			},
+			fileName: {
+				tooltip: 'Optional file name for download',
+				fieldType: 'text',
+				type: 'static',
+				value: '',
+				placeholder: 'document.pdf',
+				onDemandOnly: true
 			}
 		}
 	}

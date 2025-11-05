@@ -24,6 +24,7 @@
 					| 'open'
 					| 'close'
 					| 'clearFiles'
+					| 'downloadFile'
 				configuration: {
 					gotoUrl: { url: (() => string) | string | undefined; newTab: boolean | undefined }
 					setTab: {
@@ -53,6 +54,10 @@
 					}
 					clearFiles?: {
 						id: string | undefined
+					}
+					downloadFile?: {
+						s3FileInput: (() => string | { s3: string; storage?: string }) | string | { s3: string; storage?: string } | undefined
+						fileName: (() => string) | string | undefined
 					}
 				}
 		  }
@@ -309,6 +314,84 @@
 				if (!id) return
 
 				$componentControl[id].clearFiles?.()
+				break
+			}
+			case 'downloadFile': {
+				let s3FileInput = sideEffect?.configuration?.downloadFile?.s3FileInput
+				let fileName = sideEffect?.configuration?.downloadFile?.fileName
+
+				if (!s3FileInput) return
+
+				if (typeof s3FileInput === 'function') {
+					s3FileInput = await s3FileInput()
+				}
+				if (typeof fileName === 'function') {
+					fileName = await fileName()
+				}
+
+				try {
+					const handleError = (error: Error) => {
+						console.error('Error downloading file:', error)
+						sendUserToast(
+							`Error downloading file: ${error.message}. Ensure it is a valid URL, a base64 encoded data URL (data:...), or a valid S3 object.`,
+							true
+						)
+					}
+
+					const isBase64 = (str: string) => {
+						try {
+							return btoa(atob(str)) === str
+						} catch (err) {
+							return false
+						}
+					}
+
+					const downloadFile = (url: string, downloadFilename?: string) => {
+						console.log(url, downloadFilename)
+						const link = document.createElement('a')
+						link.href = url
+						link.download = downloadFilename || 'download'
+						link.target = '_blank'
+						link.rel = 'external'
+						document.body.appendChild(link)
+						link.click()
+						document.body.removeChild(link)
+					}
+
+					if (typeof s3FileInput === 'object' && 's3' in s3FileInput) {
+						const workspaceId = ($appViewerContext as any)?.workspace
+						const s3href = `/api/w/${workspaceId}/job_helpers/download_s3_file?file_key=${encodeURIComponent(
+							s3FileInput?.s3 ?? ''
+						)}${s3FileInput?.storage ? `&storage=${s3FileInput.storage}` : ''}`
+						downloadFile(s3href, fileName || s3FileInput.s3)
+					} else if (typeof s3FileInput === 'string') {
+						if (s3FileInput.startsWith('data:')) {
+							downloadFile(s3FileInput, fileName)
+						} else if (isBase64(s3FileInput)) {
+							const base64Url = `data:application/octet-stream;base64,${s3FileInput}`
+							downloadFile(base64Url, fileName)
+						} else if (/^(http|https):\/\//.test(s3FileInput) || s3FileInput.startsWith('/')) {
+							const url = s3FileInput.startsWith('/')
+								? `${window.location.origin}${s3FileInput}`
+								: s3FileInput
+							console.log('Downloading file from:', url)
+							downloadFile(url, fileName ?? s3FileInput.split('/').pop()?.split('?')[0])
+						} else {
+							handleError(
+								new Error(
+									'The input must be a valid URL, a base64 encoded string, or a valid S3 object.'
+								)
+							)
+						}
+					} else {
+						handleError(
+							new Error('The input must be a string or an object with an s3 property.')
+						)
+					}
+				} catch (error) {
+					console.error('Error downloading file:', error)
+					sendUserToast(`Error downloading file: ${error}`, true)
+				}
 				break
 			}
 			default:

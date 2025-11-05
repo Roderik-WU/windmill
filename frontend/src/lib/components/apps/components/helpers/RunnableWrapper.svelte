@@ -339,10 +339,11 @@
 					}
 
 					const isBase64 = (str: string) => {
-						if (!str || str.length % 4 !== 0) {
+						try {
+							return btoa(atob(str)) === str
+						} catch (err) {
 							return false
 						}
-						return /^[A-Za-z0-9+/]*={0,2}$/.test(str)
 					}
 
 					const extractFilenameFromPath = (path: string): string | undefined => {
@@ -355,27 +356,27 @@
 						link.download = downloadFilename || 'download'
 						link.target = '_blank'
 						link.rel = 'external'
-						document.body.appendChild(link)
 						link.click()
-						document.body.removeChild(link)
 					}
 
 					if (typeof s3FileInput === 'object' && 's3' in s3FileInput) {
 						const s3href = `/api/w/${workspace}/job_helpers/download_s3_file?file_key=${encodeURIComponent(
 							s3FileInput.s3
 						)}${s3FileInput.storage ? `&storage=${s3FileInput.storage}` : ''}`
-						downloadFile(s3href, fileName || extractFilenameFromPath(s3FileInput.s3))
+						const fallbackName = fileName || extractFilenameFromPath(s3FileInput.s3)
+						downloadFile(s3href, fallbackName)
 					} else if (typeof s3FileInput === 'string') {
 						if (s3FileInput.startsWith('data:')) {
 							downloadFile(s3FileInput, fileName)
-						} else if (isBase64(s3FileInput)) {
-							const base64Url = `data:application/octet-stream;base64,${s3FileInput}`
-							downloadFile(base64Url, fileName)
 						} else if (/^(http|https):\/\//.test(s3FileInput) || s3FileInput.startsWith('/')) {
 							const url = s3FileInput.startsWith('/')
 								? `${window.location.origin}${s3FileInput}`
 								: s3FileInput
-							downloadFile(url, fileName ?? extractFilenameFromPath(s3FileInput))
+							const fallbackName = fileName || extractFilenameFromPath(s3FileInput)
+							downloadFile(url, fallbackName)
+						} else if (isBase64(s3FileInput)) {
+							const base64Url = `data:application/octet-stream;base64,${s3FileInput}`
+							downloadFile(base64Url, fileName)
 						} else {
 							handleError(
 								new Error(

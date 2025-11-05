@@ -342,11 +342,11 @@
 						if (!str || str.length % 4 !== 0) {
 							return false
 						}
-						try {
-							return /^[A-Za-z0-9+/]*={0,2}$/.test(str) && btoa(atob(str)) === str
-						} catch (err) {
-							return false
-						}
+						return /^[A-Za-z0-9+/]*={0,2}$/.test(str)
+					}
+
+					const extractFilenameFromPath = (path: string): string | undefined => {
+						return path.split('/').pop()?.split('?')[0]
 					}
 
 					const downloadFile = (url: string, downloadFilename?: string) => {
@@ -362,9 +362,9 @@
 
 					if (typeof s3FileInput === 'object' && 's3' in s3FileInput) {
 						const s3href = `/api/w/${workspace}/job_helpers/download_s3_file?file_key=${encodeURIComponent(
-							s3FileInput?.s3 ?? ''
-						)}${s3FileInput?.storage ? `&storage=${s3FileInput.storage}` : ''}`
-						downloadFile(s3href, fileName || s3FileInput.s3.split('/').pop())
+							s3FileInput.s3
+						)}${s3FileInput.storage ? `&storage=${s3FileInput.storage}` : ''}`
+						downloadFile(s3href, fileName || extractFilenameFromPath(s3FileInput.s3))
 					} else if (typeof s3FileInput === 'string') {
 						if (s3FileInput.startsWith('data:')) {
 							downloadFile(s3FileInput, fileName)
@@ -375,7 +375,7 @@
 							const url = s3FileInput.startsWith('/')
 								? `${window.location.origin}${s3FileInput}`
 								: s3FileInput
-							downloadFile(url, fileName ?? s3FileInput.split('/').pop()?.split('?')[0])
+							downloadFile(url, fileName ?? extractFilenameFromPath(s3FileInput))
 						} else {
 							handleError(
 								new Error(

@@ -110,32 +110,53 @@ SET s3_secret_access_key='80yMndIMcyXwEujxVNINQbf0tBlIzRaLPyM2m1n4';
 
     @unittest.skip("skipping")
     def test_remove_s3_file(self):
-        # First upload a file
-        file_key = wmill.write_s3_file(
-            S3Object(s3="test_file_to_delete.txt"), b"This file will be deleted"
-        )
+        test_content = b"This file will be deleted"
+        s3_obj = S3Object(s3="test_file_to_delete.txt")
+        
+        # 1. Upload a file
+        file_key = wmill.write_s3_file(s3_obj, test_content)
         print(f"Uploaded file: {file_key}")
         
-        # Now remove it
-        wmill.remove_s3_file(S3Object(s3="test_file_to_delete.txt"))
+        # 2. Verify the file exists by reading it back
+        content = wmill.load_s3_file(s3_obj)
+        self.assertEqual(content, test_content)
+        print(f"File verified: content matches ({len(content)} bytes)")
+        
+        # 3. Remove the file
+        wmill.remove_s3_file(s3_obj)
         print("File removed successfully")
+        
+        # 4. Verify the file no longer exists (should raise an exception)
+        with self.assertRaises(Exception):
+            wmill.load_s3_file(s3_obj)
+        print("Verified file was removed (read failed as expected)")
 
     @unittest.skip("skipping")
     def test_remove_s3_file_with_resource_path(self):
-        # Test with explicit resource path
+        test_content = b"This file will be deleted with resource path"
+        s3_obj = S3Object(s3="test_file_with_resource.txt")
+        
+        # 1. Upload with explicit resource path
         file_key = wmill.write_s3_file(
-            S3Object(s3="test_file_with_resource.txt"),
-            b"This file will be deleted with resource path",
+            s3_obj,
+            test_content,
             s3_resource_path=self._resource_path
         )
         print(f"Uploaded file: {file_key}")
         
-        # Now remove it with resource path
-        wmill.remove_s3_file(
-            S3Object(s3="test_file_with_resource.txt"),
-            s3_resource_path=self._resource_path
-        )
+        # 2. Verify the file exists by reading it back
+        content = wmill.load_s3_file(s3_obj, s3_resource_path=self._resource_path)
+        self.assertEqual(content, test_content)
+        print(f"File verified: content matches ({len(content)} bytes)")
+        
+        # 3. Remove with resource path
+        wmill.remove_s3_file(s3_obj, s3_resource_path=self._resource_path)
         print("File removed successfully with resource path")
+        
+        # 4. Verify the file no longer exists (should raise an exception)
+        with self.assertRaises(Exception):
+            wmill.load_s3_file(s3_obj, s3_resource_path=self._resource_path)
+        print("Verified file was removed (read failed as expected)")
 
 
 if __name__ == "__main__":

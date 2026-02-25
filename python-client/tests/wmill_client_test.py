@@ -108,6 +108,35 @@ SET s3_secret_access_key='80yMndIMcyXwEujxVNINQbf0tBlIzRaLPyM2m1n4';
             )
         print(file_key)
 
+    @unittest.skip("skipping")
+    def test_remove_s3_file(self):
+        # First upload a file
+        file_key = wmill.write_s3_file(
+            S3Object(s3="test_file_to_delete.txt"), b"This file will be deleted"
+        )
+        print(f"Uploaded file: {file_key}")
+        
+        # Now remove it
+        wmill.remove_s3_file(S3Object(s3="test_file_to_delete.txt"))
+        print("File removed successfully")
+
+    @unittest.skip("skipping")
+    def test_remove_s3_file_with_resource_path(self):
+        # Test with explicit resource path
+        file_key = wmill.write_s3_file(
+            S3Object(s3="test_file_with_resource.txt"),
+            b"This file will be deleted with resource path",
+            s3_resource_path=self._resource_path
+        )
+        print(f"Uploaded file: {file_key}")
+        
+        # Now remove it with resource path
+        wmill.remove_s3_file(
+            S3Object(s3="test_file_with_resource.txt"),
+            s3_resource_path=self._resource_path
+        )
+        print("File removed successfully with resource path")
+
 
 if __name__ == "__main__":
     unittest.main()
